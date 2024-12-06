@@ -1,53 +1,127 @@
-use crate::expression::{Exp, RunErr};
-use std::num::ParseFloatError;
+use crate::lexer::Token;
+use crate::object::Object;
+use std::error::Error;
+use std::fmt;
 
-// tokenization
-pub fn tokenize(src: String) -> Vec<String> {
-  src
-    .replace("[", " [ ") // unlike lisp, we use angle brackets
-    .replace("]", " ] ") // because then we don't have to hold shift
-    .split_whitespace()
-    .map(|x| x.to_string())
-    .collect()
+#[derive(Debug)]
+pub struct ParserError {
+  err: String,
 }
 
-// parsing a list of tokens/possible sublists
-pub fn read_seq<'a>(
-  tokens: &'a [String],
-) -> Result<(Exp, &'a [String]), RunErr> {
-  let mut res: Vec<Exp> = vec![];
-  let mut xs = tokens;
-  loop {
-    let (next_token, rest) = xs
-      .split_first()
-      .ok_or(RunErr::Reason("could not find closing `]`".to_string()))?;
-    if next_token == "]" {
-      return Ok((Exp::List(res), rest)); // skip `]`, head to the token after
+impl fmt::Display for ParseError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "Parser error: {}", self.err)
+  }
+}
+
+impl Error for ParseError {}
+
+pub fn parse(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
+  let token = tokens.pop();
+
+  if token != Some(Token::LCrutch) {
+    return Err(ParseError {err: format!("Expected `[`, found {:?}", token)});
+  }
+
+  let mut list: Vec<Object> = Vec::new();
+  while !tokens.is_empty() {
+    let token = tokens.pop();
+    if token == None {
+      return Err(ParseError {err: format!("Did not find enough tokens")});
     }
-    let (exp, new_xs) = parse(&xs)?;
-    res.push(exp);
-    xs = new_xs;
+
+    match token.unwrap() {
+      Token::Number(n) => list.push(Object::Number(n)),
+      Token::Symbol(s) => list.push(Object::Symbol(s)),
+      Token::LCrutch => {
+        tokens.push(Token::LCrutch);
+        let sub_list = parse(tokens)?; // recursive call
+        list.push(sub_list);
+      }
+      Token::RCrutch => {
+        return Ok(Object::List(list));
+      }
+    }
   }
+
+  Ok(Object::List(list))
 }
 
-// parse ALL the tokens
-pub fn parse<'a>(tokens: &'a [String]) -> Result<(Exp, &'a [String]), RunErr> {
-  let (token, rest) = tokens
-    .split_first()
-    .ok_or(RunErr::Reason("could not get token".to_string()))?;
 
-  match &token[..] {
-    "[" => read_seq(rest), // found a list
-    "]" => Err(RunErr::Reason("unexpected `]`".to_string())),
-    _ => Ok((parse_atom(token), rest)),
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_parse_add() {
+    let tokens = vec![
+      Token::LCrutch,
+      Token::Symbol("+".to_string()),
+      Token::Number(1.0),
+      Token::Number(2.0),
+      Token::RCrutch,
+    ];
+
+    let list = parse(&mut tokens).unwrap();
+
+    assert_eq!(list, Object::List(vec![
+      Object::Symbol("+".to_string()),
+      Object::Number(1.0),
+      Object::Number(2.0),
+    ]));
   }
-}
 
-// parsing a single symbol
-fn parse_atom(token: &str) -> Exp {
-  let potential_float: Result<f64, ParseFloatError> = token.parse();
-  match potential_float {
-    Ok(v) => Exp::Number(v),
-    Err(_) => Exp::Symbol(token.to_string().clone()),
+  #[test]
+  fn test_parse_area_of_circle() {
+    let tokens = vec![
+      Token::LCrutch,
+      Token::LCrutch,
+      Token::Symbol("let".to_string()),
+      Token::Symbol("r".to_string()),
+      Token::Number(10.0),
+      Token::RCrutch,
+      Token::LCrutch,
+      Token::Symbol("let".to_string()),
+      Token::Symbol("pi".to_string()),
+      Token::Number(3.14),
+      Token::RCrutch,
+      Token::LCrutch,
+      Token::Symbol("*".to_string()),
+      Token::Symbol("pi".to_string()),
+      Token::LCrutch,
+      Token::Symbol("*".to_string()),
+      Token::Symbol("r".to_string()),
+      Token::Symbol("r".to_string()),
+      Token::RCrutch,
+      Token::RCrutch,
+      Token::RCrutch
+    ];
+
+    let list = parse(&mut tokens).unwrap();
+
+    assert_eq!(
+      list,
+      Object::List(vec![
+        Object::List(vec![
+          Object::Symbol("define".to_string()),
+          Object::Symbol("r".to_string()),
+          Object::Number(10.0),
+        ]),
+        Object::List(vec![
+          Object::Symbol("define".to_string()),
+          Object::Symbol("pi".to_string()),
+          Object::Number(3.14),
+        ]),
+        Object::List(vec![
+          Object::Symbol("*".to_string()),
+          Object::Symbol("pi".to_string()),
+          Object::List(vec![
+            Object::Symbol("*".to_string()),
+            Object::Symbol("r".to_string()),
+            Object::Symbol("r".to_string()),
+          ]),
+        ]),
+      ])
+    );
   }
 }

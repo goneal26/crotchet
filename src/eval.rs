@@ -53,7 +53,7 @@ fn eval_list(
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
       "set" => eval_set(list, env),
-      "puts" => eval_puts(list, env),
+      "put" => eval_put(list, env),
       "while" => eval_while(list, env),
       // ^builtins go here
       _ => eval_function_call(s, list, env),
@@ -199,9 +199,9 @@ fn eval_function_call(
 
 // builtin function time!
 
-// puts: takes a variable list of args, printing each on a single line
+// put: takes a variable list of args, printing each on a single line
 // after running, goes to new line and returns the number of things printed
-fn eval_puts(
+fn eval_put(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
 ) -> Result<Object, String> {

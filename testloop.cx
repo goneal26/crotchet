@@ -1,6 +1,34 @@
 [
-  [let x 0]
-  [while [< x 10]
-    [puts x]
-    [set x [+ x 1]]]
+  ; [let x 0]
+  ; [while [< x 10]
+  ;   [puts x]
+  ;   [set x [+ x 1]]]
+
+  [put "testing functions"]
+  [let inc [fn [n] [set n [+ n 1]]]]
+
+  [let j 3]
+  [put "j = " j]
+  [put [inc j]]
+  [put "j = " j]
+
+  [let nprint 
+    [fn [n] [
+      [let i 0]
+      [while [< i n]
+        [put i]
+        [set i [+ i 1]]]
+    ]]]
+
+  [let dotimes 
+    [fn [n function] [
+      [let i 0]
+      [while [< i n]
+        [function]
+        [set i [+ i 1]]]
+    ]]]
+  
+
+  [dotimes 15
+    [fn [] [put "hello"]]]
 ]

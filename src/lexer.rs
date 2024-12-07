@@ -36,7 +36,7 @@ impl fmt::Display for LexerError {
 pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
   let temp = source.replace("[", " [ ").replace("]", " ] ");
   let words = temp.split_whitespace();
-    
+
   let mut tokens: Vec<Token> = Vec::new();
   for word in words {
     match word {
@@ -46,13 +46,14 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
         let x = word.parse::<f64>();
         if x.is_ok() {
           tokens.push(Token::Number(x.unwrap()));
-        } else { // for now, if not number then is identifier
+        } else {
+          // for now, if not number then is identifier
           tokens.push(Token::Symbol(word.to_string()));
         }
       }
     }
   }
-  
+
   Ok(tokens)
 }
 
@@ -84,9 +85,9 @@ mod tests {
         [* pi [* r r]]
       ]
     ";
-      
+
     let tokens = tokenize(program).unwrap_or(vec![]);
-      
+
     assert_eq!(
       tokens,
       vec![

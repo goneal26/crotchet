@@ -1,10 +1,10 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, tokenize};
 use crate::object::Object;
 use std::error::Error;
 use std::fmt;
 
 #[derive(Debug)]
-pub struct ParserError {
+pub struct ParseError {
   err: String,
 }
 
@@ -16,18 +16,34 @@ impl fmt::Display for ParseError {
 
 impl Error for ParseError {}
 
-pub fn parse(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
+pub fn parse(program: &str) -> Result<Object, ParseError> {
+  let token_result = tokenize(program);
+  if token_result.is_err() {
+      return Err(ParseError {
+          err: format!("{}", token_result.err().unwrap()),
+      });
+  }
+  let mut tokens = token_result.unwrap().into_iter().rev().collect::<Vec<_>>();
+  let parsed_list = parse_list(&mut tokens)?;
+  Ok(parsed_list)
+}
+
+fn parse_list(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
   let token = tokens.pop();
 
   if token != Some(Token::LCrutch) {
-    return Err(ParseError {err: format!("Expected `[`, found {:?}", token)});
+    return Err(ParseError {
+      err: format!("Expected `[`, found {:?}", token),
+    });
   }
 
   let mut list: Vec<Object> = Vec::new();
   while !tokens.is_empty() {
     let token = tokens.pop();
-    if token == None {
-      return Err(ParseError {err: format!("Did not find enough tokens")});
+    if token.is_none() {
+      return Err(ParseError {
+        err: "Did not find enough tokens".to_string(),
+      });
     }
 
     match token.unwrap() {
@@ -35,7 +51,7 @@ pub fn parse(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
       Token::Symbol(s) => list.push(Object::Symbol(s)),
       Token::LCrutch => {
         tokens.push(Token::LCrutch);
-        let sub_list = parse(tokens)?; // recursive call
+        let sub_list = parse_list(tokens)?; // recursive call
         list.push(sub_list);
       }
       Token::RCrutch => {
@@ -47,68 +63,46 @@ pub fn parse(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
   Ok(Object::List(list))
 }
 
-
 #[cfg(test)]
 mod tests {
+
   use super::*;
 
   #[test]
   fn test_parse_add() {
-    let tokens = vec![
-      Token::LCrutch,
-      Token::Symbol("+".to_string()),
-      Token::Number(1.0),
-      Token::Number(2.0),
-      Token::RCrutch,
-    ];
+    let program = "[+ 2 1]";
 
-    let list = parse(&mut tokens).unwrap();
+    let list = parse(program).unwrap();
 
-    assert_eq!(list, Object::List(vec![
-      Object::Symbol("+".to_string()),
-      Object::Number(1.0),
-      Object::Number(2.0),
-    ]));
+    assert_eq!(
+      list,
+      Object::List(vec![
+        Object::Symbol("+".to_string()),
+        Object::Number(2.0),
+        Object::Number(1.0),
+      ])
+    );
   }
 
   #[test]
   fn test_parse_area_of_circle() {
-    let tokens = vec![
-      Token::LCrutch,
-      Token::LCrutch,
-      Token::Symbol("let".to_string()),
-      Token::Symbol("r".to_string()),
-      Token::Number(10.0),
-      Token::RCrutch,
-      Token::LCrutch,
-      Token::Symbol("let".to_string()),
-      Token::Symbol("pi".to_string()),
-      Token::Number(3.14),
-      Token::RCrutch,
-      Token::LCrutch,
-      Token::Symbol("*".to_string()),
-      Token::Symbol("pi".to_string()),
-      Token::LCrutch,
-      Token::Symbol("*".to_string()),
-      Token::Symbol("r".to_string()),
-      Token::Symbol("r".to_string()),
-      Token::RCrutch,
-      Token::RCrutch,
-      Token::RCrutch
-    ];
-
-    let list = parse(&mut tokens).unwrap();
+    let program = "[
+      [def r 10]
+      [def pi 3.14]
+      [* pi [* r r]]
+    ]";
+    let list = parse(program).unwrap();
 
     assert_eq!(
       list,
       Object::List(vec![
         Object::List(vec![
-          Object::Symbol("define".to_string()),
+          Object::Symbol("def".to_string()),
           Object::Symbol("r".to_string()),
           Object::Number(10.0),
         ]),
         Object::List(vec![
-          Object::Symbol("define".to_string()),
+          Object::Symbol("def".to_string()),
           Object::Symbol("pi".to_string()),
           Object::Number(3.14),
         ]),

@@ -1,5 +1,5 @@
 [
-  [def fib 
+  [let fib 
     [fn [n] 
       [if [<= n 0] 0
         [if [= n 1] 0 ; here is a comment btw

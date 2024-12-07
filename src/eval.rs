@@ -48,7 +48,7 @@ fn eval_list(
       "+" | "-" | "*" | "/" | "<" | "<=" | ">" | ">=" | "=" | "!=" => {
         eval_binary_op(list, env) // returns
       }
-      "def" => eval_def(list, env),
+      "let" => eval_let(list, env),
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
 
@@ -110,17 +110,17 @@ fn eval_binary_op(
   }
 }
 
-fn eval_def(
+fn eval_let(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
 ) -> Result<Object, String> {
   if list.len() != 3 {
-    return Err("Invalid number of arguments for `def`".to_string());
+    return Err("Invalid number of arguments for `let`".to_string());
   }
 
   let sym = match &list[1] {
     Object::Symbol(s) => s.clone(),
-    _ => return Err("Invalid `def`".to_string()),
+    _ => return Err("Invalid `let`".to_string()),
   };
   let val = eval_obj(&list[2], env)?;
   env.borrow_mut().set(&sym, val);

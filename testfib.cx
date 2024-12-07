@@ -5,15 +5,6 @@
         [if [= n 1] 0 ; here is a comment btw
           [if [= n 2] 1
             [+ [fib [- n 1]] [fib [- n 2]]]]]]]]
-  [+ 3 3]
-  [fib 1]
-  [fib 2]
-  [fib 3]
-  [fib 4]
-  [fib 5]
-  [fib 6]
-  [fib 7]
-  [fib 8]
-  [fib 9]
-  [fib 10]
+            
+  [puts [fib 10]] ; prints 10th fibonacci number
 ]

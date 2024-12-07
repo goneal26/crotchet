@@ -51,10 +51,10 @@ fn eval_list(
       "let" => eval_let(list, env),
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
-
-      // builtin functions
+      "set" => eval_set(list, env),
       "puts" => eval_puts(list, env),
-
+      "while" => eval_while(list, env),
+      // ^builtins go here
       _ => eval_function_call(s, list, env),
     },
     _ => {
@@ -198,7 +198,8 @@ fn eval_function_call(
 
 // builtin function time!
 
-// puts: takes a variable list of args. if
+// puts: takes a variable list of args, printing each on a single line
+// after running, goes to new line and returns the number of things printed
 fn eval_puts(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
@@ -207,7 +208,7 @@ fn eval_puts(
     println!();
     return Ok(Object::Number(0.0));
   }
-  
+
   for item in &list[1..] {
     let val = eval_obj(item, env)?;
     match val {
@@ -231,4 +232,70 @@ fn eval_puts(
 
   println!();
   Ok(Object::Number((list.len() - 1) as f64)) // TODO beware "as" conversion?
+}
+
+fn eval_set(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() != 3 {
+    return Err("Invalid number of arguments for `set`".to_string());
+  }
+
+  let var = match &list[1] {
+    Object::Symbol(s) => s.clone(),
+    _ => return Err("First argument of `set` must be a symbol".to_string()),
+  };
+
+  let value = eval_obj(&list[2], env)?;
+
+  let exists = {
+    let borrowed_env = env.borrow();
+    borrowed_env.get(&var).is_some()
+  };
+
+  if exists {
+    env.borrow_mut().set(&var, value.clone());
+    Ok(value)
+  } else {
+    Err(format!("Variable `{}` not found", var))
+  }
+}
+
+// takes a single list of args (so usage: `loop [arg1, arg2, ...]`)
+// must
+fn eval_while(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() < 3 {
+    return Err("Invalid number of arguments for `while`".to_string());
+  }
+
+  let condition = &list[1];
+  let body = &list[2..];
+
+  let mut last_result = Object::Void;
+
+  loop {
+    let cond_obj = eval_obj(condition, env)?;
+    let cond = match cond_obj {
+      Object::Bool(b) => b,
+      _ => {
+        return Err(
+          "Condition of `while` must evaluate to a boolean".to_string(),
+        )
+      }
+    };
+
+    if !cond {
+      break;
+    }
+
+    for body_expr in body {
+      last_result = eval_obj(body_expr, env)?;
+    }
+  }
+
+  Ok(last_result)
 }

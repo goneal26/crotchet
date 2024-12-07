@@ -1,4 +1,4 @@
-use crate::lexer::{Token, tokenize};
+use crate::lexer::{tokenize, Token};
 use crate::object::Object;
 use std::error::Error;
 use std::fmt;
@@ -19,9 +19,9 @@ impl Error for ParseError {}
 pub fn parse(program: &str) -> Result<Object, ParseError> {
   let token_result = tokenize(program);
   if token_result.is_err() {
-      return Err(ParseError {
-          err: format!("{}", token_result.err().unwrap()),
-      });
+    return Err(ParseError {
+      err: format!("{}", token_result.err().unwrap()),
+    });
   }
   let mut tokens = token_result.unwrap().into_iter().rev().collect::<Vec<_>>();
   let parsed_list = parse_list(&mut tokens)?;

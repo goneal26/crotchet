@@ -1,10 +1,13 @@
 use crate::env::Env;
 use crate::object::Object;
+use crate::parser::parse;
 use std::cell::RefCell;
 use std::rc::Rc;
-use crate::parser::parse;
 
-pub fn eval(program: &str, env: &mut Rc<RefCell<Env>>) -> Result<Object, String> {
+pub fn eval(
+  program: &str,
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
   let parsed_list = parse(program);
   if parsed_list.is_err() {
     return Err(format!("{}", parsed_list.err().unwrap()));

@@ -21,18 +21,18 @@ fn main() {
 
   match argc {
     // TODO better usage error
-    argc if argc > 2 => eprintln!("; crutch: usage error too many args"),
+    argc if argc > 2 => eprintln!("; crutch usage error: too many args"),
     argc if argc < 2 => {
       match repl() {
-        Ok(_) => println!("; crutch: program exited successfully"),
-        Err(error) => eprintln!("; crutch: had error {}", error),
+        Ok(_) => println!("; crutch program exited successfully"),
+        Err(error) => eprintln!("; crutch error: {}", error),
       };
     }
     _ => {
       // TODO run file
       match run_file(&args[1]) {
-        Ok(_) => println!("; crutch: program exited successfully"),
-        Err(error) => eprintln!("; crutch: had error {}", error),
+        Ok(_) => println!("; crutch program exited successfully"),
+        Err(error) => eprintln!("; crutch error: {}", error),
       }
     }
   }
@@ -46,24 +46,7 @@ fn run_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
   // eval the file contents
   let mut env = Rc::new(RefCell::new(env::Env::new()));
 
-  let val = eval::eval(program.as_ref(), &mut env)?;
-  match val {
-    Object::Void => {}
-    Object::Number(n) => println!("{}", n),
-    Object::Bool(b) => println!("{}", b),
-    Object::Symbol(s) => println!("{}", s),
-    Object::Lambda(params, body) => {
-      println!("fn[");
-      for param in params {
-        println!("{} ", param);
-      }
-      println!("]");
-      for expr in body {
-        println!(" {}", expr);
-      }
-    }
-    _ => println!("{}", val),
-  }
+  eval::eval(program.as_ref(), &mut env)?;
 
   Ok(())
 }

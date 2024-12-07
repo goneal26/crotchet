@@ -34,21 +34,34 @@ impl fmt::Display for LexerError {
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
-  let temp = source.replace("[", " [ ").replace("]", " ] ");
-  let words = temp.split_whitespace();
-
+  // split into lines to handle comments
+  let lines = source.lines();
   let mut tokens: Vec<Token> = Vec::new();
-  for word in words {
-    match word {
-      "[" => tokens.push(Token::LCrutch),
-      "]" => tokens.push(Token::RCrutch),
-      _ => {
-        let x = word.parse::<f64>();
-        if x.is_ok() {
-          tokens.push(Token::Number(x.unwrap()));
-        } else {
-          // for now, if not number then is identifier
-          tokens.push(Token::Symbol(word.to_string()));
+
+  // clean comment from line
+  for line in lines {
+    // inline comment starts with a semicolon!
+    let clean_line = match line.split_once(';') {
+      Some((before, _)) => before,
+      None => line,
+    };
+
+    // now tokenize
+    let temp = clean_line.replace("[", " [ ").replace("]", " ] ");
+    let words = temp.split_whitespace();
+
+    for word in words {
+      match word {
+        "[" => tokens.push(Token::LCrutch),
+        "]" => tokens.push(Token::RCrutch),
+        _ => {
+          let x = word.parse::<f64>();
+          if x.is_ok() {
+            tokens.push(Token::Number(x.unwrap()));
+          } else {
+            // for now, if not number then is identifier
+            tokens.push(Token::Symbol(word.to_string()));
+          }
         }
       }
     }

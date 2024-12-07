@@ -2,7 +2,7 @@
   [def fib 
     [fn [n] 
       [if [<= n 0] 0
-        [if [= n 1] 0
+        [if [= n 1] 0 ; here is a comment btw
           [if [= n 2] 1
             [+ [fib [- n 1]] [fib [- n 2]]]]]]]]
   [+ 3 3]

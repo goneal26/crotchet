@@ -46,11 +46,15 @@ fn eval_list(
   match head {
     Object::Symbol(s) => match s.as_str() {
       "+" | "-" | "*" | "/" | "<" | "<=" | ">" | ">=" | "=" | "!=" => {
-        eval_binary_op(list, env) // returns - TODO more???
+        eval_binary_op(list, env) // returns
       }
       "def" => eval_def(list, env),
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
+
+      // builtin functions
+      "puts" => eval_puts(list, env),
+
       _ => eval_function_call(s, list, env),
     },
     _ => {
@@ -192,7 +196,39 @@ fn eval_function_call(
   }
 }
 
-// #[cfg(test)]
-// mod tests {
-//   use super::*;
-// }
+// builtin function time!
+
+// puts: takes a variable list of args. if
+fn eval_puts(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() <= 1 {
+    println!();
+    return Ok(Object::Number(0.0));
+  }
+  
+  for item in &list[1..] {
+    let val = eval_obj(item, env)?;
+    match val {
+      Object::Void => {}
+      Object::Number(n) => print!("{}", n),
+      Object::Bool(b) => print!("{}", b),
+      Object::Symbol(s) => print!("{}", s),
+      Object::Lambda(params, body) => {
+        print!("fn[");
+        for param in params {
+          print!("{} ", param);
+        }
+        print!("]");
+        for expr in body {
+          print!(" {}", expr);
+        }
+      }
+      _ => print!("{}", val),
+    }
+  }
+
+  println!();
+  Ok(Object::Number((list.len() - 1) as f64)) // TODO beware "as" conversion?
+}

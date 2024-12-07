@@ -3,6 +3,8 @@ use crate::object::Object;
 use crate::parser::parse;
 use std::cell::RefCell;
 use std::rc::Rc;
+use rand::random;
+use std::io::{self, Write};
 
 pub fn eval(
   program: &str,
@@ -49,13 +51,17 @@ fn eval_list(
       "+" | "-" | "*" | "/" | "<" | "<=" | ">" | ">=" | "=" | "!=" => {
         eval_binary_op(list, env) // returns
       }
+      
       "let" => eval_let(list, env),
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
       "set" => eval_set(list, env),
       "put" => eval_put(list, env),
+      "get" => eval_get(list, env),
       "while" => eval_while(list, env),
+      "rand" => eval_rand(),
       // ^builtins go here
+      
       _ => eval_function_call(s, list, env),
     },
     _ => {
@@ -235,6 +241,43 @@ fn eval_put(
   Ok(Object::Number((list.len() - 1) as f64)) // TODO beware "as" conversion?
 }
 
+// of the form [get "prompt"] where the prompt is optional
+// prints "prompt" on a newline, accepts input from the user
+// tries to parse input as a float, will return err upon fail
+fn eval_get(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() > 2 {
+    return Err("Invalid number of arguments for `get`".to_string());
+  }
+
+  
+  let prompt = if list.len() == 2 {
+    let val = eval_obj(&list[1], env)?;
+    format!("{}", val)
+  } else {
+    "".to_string()
+  };
+  print!("{}", prompt);
+  match io::stdout().flush() {
+    Ok(_) => {},
+    Err(error) => return Err(format!("`get` failed to flush input: {}", error))
+  }
+  
+  let mut input = String::new();
+  match io::stdin().read_line(&mut input) {
+    Ok(_) => {},
+    Err(error) => return Err(format!("`get` failed to read: {}", error))
+  }
+
+  match input.trim().parse::<f64>() {
+    Ok(number) => Ok(Object::Number(number)),
+    Err(_) => Err(format!("`get` failed to parse {} as float", input)),
+  }
+  
+}
+
 fn eval_set(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
@@ -263,8 +306,7 @@ fn eval_set(
   }
 }
 
-// takes a single list of args (so usage: `loop [arg1, arg2, ...]`)
-// must
+// 
 fn eval_while(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
@@ -299,4 +341,10 @@ fn eval_while(
   }
 
   Ok(last_result)
+}
+
+// returns a random float between [0, 1)
+fn eval_rand() -> Result<Object, String> {
+  let value: f64 = random();
+  Ok(Object::Number(value))
 }

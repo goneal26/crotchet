@@ -49,6 +49,7 @@ fn parse_list(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
     match token.unwrap() {
       Token::Number(n) => list.push(Object::Number(n)),
       Token::Symbol(s) => list.push(Object::Symbol(s)),
+      Token::StringLit(s) => list.push(Object::String(s)),
       Token::LCrutch => {
         tokens.push(Token::LCrutch);
         let sub_list = parse_list(tokens)?; // recursive call

@@ -26,6 +26,7 @@ fn eval_obj(
     Object::Number(n) => Ok(Object::Number(*n)),
     Object::Symbol(s) => eval_symbol(s, env),
     Object::List(list) => eval_list(list, env),
+    Object::String(_) => Ok(obj.clone()),
   }
 }
 

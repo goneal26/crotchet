@@ -8,6 +8,7 @@ pub enum Object {
   Symbol(String),
   Lambda(Vec<String>, Vec<Object>),
   List(Vec<Object>),
+  String(String)
 }
 
 impl fmt::Display for Object {
@@ -38,6 +39,7 @@ impl fmt::Display for Object {
         }
         write!(f, "]")
       }
+      Object::String(s) => write!(f, "{}", s),
     }
   }
 }

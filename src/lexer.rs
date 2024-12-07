@@ -7,6 +7,7 @@ pub enum Token {
   Symbol(String),
   LCrutch,
   RCrutch, // coz that's what ] is called
+  StringLit(String), 
 }
 
 impl fmt::Display for Token {
@@ -16,20 +17,21 @@ impl fmt::Display for Token {
       Token::Symbol(s) => write!(f, "{}", s),
       Token::LCrutch => write!(f, "["),
       Token::RCrutch => write!(f, "]"),
+      Token::StringLit(s) => write!(f, "{}", s), 
     }
   }
 }
 
 #[derive(Debug)]
 pub struct LexerError {
-  ch: char,
+  msg: String,
 }
 
 impl Error for LexerError {}
 
 impl fmt::Display for LexerError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "unexpected char: {}", self.ch)
+    write!(f, "syntax: {}", self.msg)
   }
 }
 
@@ -47,20 +49,44 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
     };
 
     // now tokenize
-    let temp = clean_line.replace("[", " [ ").replace("]", " ] ");
-    let words = temp.split_whitespace();
+    let temp = clean_line
+      .replace("[", " [ ")
+      .replace("]", " ] ");
+    
+    let mut chars = temp.chars().peekable();
+    while let Some(c) = chars.next() {
+      if c.is_whitespace() { continue; }
 
-    for word in words {
-      match word {
-        "[" => tokens.push(Token::LCrutch),
-        "]" => tokens.push(Token::RCrutch),
+      match c {
+        '[' => tokens.push(Token::LCrutch),
+        ']' => tokens.push(Token::RCrutch),
+        '"' => {
+          // start parsing string literal
+          let mut literal = String::new();
+          while let Some(&next_char) = chars.peek() {
+            if next_char == '"' {
+              chars.next(); // consume closing quote
+              break;
+            }
+            literal.push(next_char);
+            chars.next();
+          }
+          tokens.push(Token::StringLit(literal));
+        }
         _ => {
-          let x = word.parse::<f64>();
-          if x.is_ok() {
-            tokens.push(Token::Number(x.unwrap()));
+          // symbols and numbers
+          let mut word = c.to_string();
+          while let Some(&next_char) = chars.peek() {
+            if next_char.is_whitespace() || next_char == '[' || next_char == ']' || next_char == '"' {
+              break;
+            }
+            word.push(next_char);
+            chars.next();
+          }
+          if let Ok(number) = word.parse::<f64>() {
+            tokens.push(Token::Number(number));
           } else {
-            // for now, if not number then is identifier
-            tokens.push(Token::Symbol(word.to_string()));
+            tokens.push(Token::Symbol(word));
           }
         }
       }
@@ -84,6 +110,21 @@ mod tests {
         Token::Symbol("+".to_string()),
         Token::Number(1.0),
         Token::Number(2.0),
+        Token::RCrutch,
+      ]
+    );
+  }
+
+  #[test]
+  fn test_string_literal() {
+    let tokens = tokenize("[puts \"hello \" \"world!\"]").unwrap_or(vec![]);
+    assert_eq!(
+      tokens,
+      vec![
+        Token::LCrutch,
+        Token::Symbol("puts".to_string()),
+        Token::StringLit("hello ".to_string()),
+        Token::StringLit("world!".to_string()),
         Token::RCrutch,
       ]
     );

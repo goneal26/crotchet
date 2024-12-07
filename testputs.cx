@@ -1,0 +1,5 @@
+[
+  [def msgcount [puts [+ 3 5] [- 2 2]]]
+  [puts msgcount]
+  [ + 3 4]
+]

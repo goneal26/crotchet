@@ -1,0 +1,29 @@
+filetype: crotchet
+
+detect:
+  filename: "\\.(crl)$" # TODO change extension?
+
+rules:
+  # builtin functions VVV
+  - statement: "\\b(while|if|print|input|first|rest|rand|round|len)\\b"
+  - identifier: "(let|set) [a-z0-9_]+" # defining/changing a binding
+  - special: "\\b(let|set)\\b" # reserved words for bindings
+  - type: "\\b(fn|list)\\b" # lambda and list
+  - constant.number: "[\\-]?[0-9]+?\\b"
+  - constant.bool: "\\b(true|false)\\b" # bools
+  - symbol.operator: "[%=><+\\-*/]|!=" # operators
+
+  # String highlighting
+  - constant.string:
+      start: "\""
+      end: "\""
+      skip: "\\\\."
+      rules:
+        - constant.specialChar: "\\\\."
+
+  # Comments
+  - comment:
+      start: ";"
+      end: "$"
+      rules:
+        - todo: "(TODO|XXX|FIXME):?"

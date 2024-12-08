@@ -13,8 +13,8 @@ use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
 
-const PROMPT: &str = "crutch> ";
-const EXTENSION: &str = ".cx"; // TODO different extension?
+const PROMPT: &str = "crotchet> ";
+const EXTENSION: &str = ".crl";
 
 fn main() {
   let args: Vec<String> = e::args().collect();
@@ -23,22 +23,32 @@ fn main() {
   match argc {
     // TODO better usage error
     argc if argc > 2 => {
-      eprintln!("; crutch usage error: too many args");
-      eprintln!("; usage: crutch [file.cx]");
+      eprintln!("; crotchet usage error: too many args");
+      eprintln!("; usage: crotchet [file.crl]");
     }
     argc if argc < 2 => {
       match repl() {
-        Ok(_) => println!("; crutch program exited successfully"),
-        Err(error) => eprintln!("; crutch error: {}", error),
+        Ok(_) => println!("; crotchet program exited successfully"),
+        Err(error) => eprintln!("; crotchet error: {}", error),
       };
     }
-    _ => {
-      // TODO run file
-      match run_file(&args[1]) {
-        Ok(_) => println!("; crutch program exited successfully"),
-        Err(error) => eprintln!("; crutch error: {}", error),
+    _ => match args[1].as_ref() {
+      "--version" | "-v" => println!("crotchet v{}", env!("CARGO_PKG_VERSION")),
+      "--help" | "-h" => {
+        println!(
+          "crotchet v{} - A LISP dialect with less `Shift`.",
+          env!("CARGO_PKG_VERSION")
+        );
+        println!("Usage: ");
+        println!("  crotchet filename.crl - run script named \"filename.crl\"");
+        println!("  crotchet - no arguments to enter REPL mode");
+        println!("    * input \"exit\" to leave REPL mode");
       }
-    }
+      _ => match run_file(&args[1]) {
+        Ok(_) => {}
+        Err(error) => eprintln!("; crotchet error: {}", error),
+      },
+    },
   }
 }
 
@@ -61,7 +71,7 @@ fn run_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
 
 fn repl() -> Result<(), Box<dyn std::error::Error>> {
   println!(
-    "; Welcome to crutch v{}, type `exit` to exit",
+    "; Welcome to crotchet v{}, type `exit` to exit",
     env!("CARGO_PKG_VERSION")
   );
   let reader = Interface::new(PROMPT).unwrap();

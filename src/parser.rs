@@ -2,6 +2,7 @@ use crate::lexer::{tokenize, Token};
 use crate::object::Object;
 use std::error::Error;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct ParseError {
@@ -31,7 +32,7 @@ pub fn parse(program: &str) -> Result<Object, ParseError> {
 fn parse_list(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
   let token = tokens.pop();
 
-  if token != Some(Token::LCrutch) {
+  if token != Some(Token::LBracket) {
     return Err(ParseError {
       err: format!("Expected `[`, found {:?}", token),
     });
@@ -48,20 +49,24 @@ fn parse_list(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
 
     match token.unwrap() {
       Token::Number(n) => list.push(Object::Number(n)),
-      Token::Symbol(s) => list.push(Object::Symbol(s)),
+      Token::Symbol(s) => match s.as_ref() {
+        "true" => list.push(Object::Bool(true)),
+        "false" => list.push(Object::Bool(false)),
+        _ => list.push(Object::Symbol(s)),
+      },
       Token::StringLit(s) => list.push(Object::String(s)),
-      Token::LCrutch => {
-        tokens.push(Token::LCrutch);
+      Token::LBracket => {
+        tokens.push(Token::LBracket);
         let sub_list = parse_list(tokens)?; // recursive call
         list.push(sub_list);
       }
-      Token::RCrutch => {
-        return Ok(Object::List(list));
+      Token::RBracket => {
+        return Ok(Object::List(Rc::new(list)));
       }
     }
   }
 
-  Ok(Object::List(list))
+  Ok(Object::List(list.into()))
 }
 
 #[cfg(test)]
@@ -88,8 +93,8 @@ mod tests {
   #[test]
   fn test_parse_area_of_circle() {
     let program = "[
-      [def r 10]
-      [def pi 3.14]
+      [let r 10]
+      [let pi 3.14]
       [* pi [* r r]]
     ]";
     let list = parse(program).unwrap();
@@ -98,12 +103,12 @@ mod tests {
       list,
       Object::List(vec![
         Object::List(vec![
-          Object::Symbol("def".to_string()),
+          Object::Symbol("let".to_string()),
           Object::Symbol("r".to_string()),
           Object::Number(10.0),
         ]),
         Object::List(vec![
-          Object::Symbol("def".to_string()),
+          Object::Symbol("let".to_string()),
           Object::Symbol("pi".to_string()),
           Object::Number(3.14),
         ]),

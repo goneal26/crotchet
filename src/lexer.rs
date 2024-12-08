@@ -5,8 +5,8 @@ use std::fmt;
 pub enum Token {
   Number(f64),
   Symbol(String),
-  LCrutch,
-  RCrutch, // coz that's what ] is called
+  LBracket,
+  RBracket, // coz that's what ] is called
   StringLit(String),
 }
 
@@ -15,8 +15,8 @@ impl fmt::Display for Token {
     match self {
       Token::Number(n) => write!(f, "{}", n),
       Token::Symbol(s) => write!(f, "{}", s),
-      Token::LCrutch => write!(f, "["),
-      Token::RCrutch => write!(f, "]"),
+      Token::LBracket => write!(f, "["),
+      Token::RBracket => write!(f, "]"),
       Token::StringLit(s) => write!(f, "{}", s),
     }
   }
@@ -58,8 +58,8 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
       }
 
       match c {
-        '[' => tokens.push(Token::LCrutch),
-        ']' => tokens.push(Token::RCrutch),
+        '[' => tokens.push(Token::LBracket),
+        ']' => tokens.push(Token::RBracket),
         '"' => {
           // start parsing string literal
           let mut literal = String::new();
@@ -110,11 +110,11 @@ mod tests {
     assert_eq!(
       tokens,
       vec![
-        Token::LCrutch,
+        Token::LBracket,
         Token::Symbol("+".to_string()),
         Token::Number(1.0),
         Token::Number(2.0),
-        Token::RCrutch,
+        Token::RBracket,
       ]
     );
   }
@@ -125,11 +125,11 @@ mod tests {
     assert_eq!(
       tokens,
       vec![
-        Token::LCrutch,
+        Token::LBracket,
         Token::Symbol("puts".to_string()),
         Token::StringLit("hello ".to_string()),
         Token::StringLit("world!".to_string()),
-        Token::RCrutch,
+        Token::RBracket,
       ]
     );
   }
@@ -149,27 +149,27 @@ mod tests {
     assert_eq!(
       tokens,
       vec![
-        Token::LCrutch,
-        Token::LCrutch,
+        Token::LBracket,
+        Token::LBracket,
         Token::Symbol("let".to_string()),
         Token::Symbol("r".to_string()),
         Token::Number(10.0),
-        Token::RCrutch,
-        Token::LCrutch,
+        Token::RBracket,
+        Token::LBracket,
         Token::Symbol("let".to_string()),
         Token::Symbol("pi".to_string()),
         Token::Number(3.14),
-        Token::RCrutch,
-        Token::LCrutch,
+        Token::RBracket,
+        Token::LBracket,
         Token::Symbol("*".to_string()),
         Token::Symbol("pi".to_string()),
-        Token::LCrutch,
+        Token::LBracket,
         Token::Symbol("*".to_string()),
         Token::Symbol("r".to_string()),
         Token::Symbol("r".to_string()),
-        Token::RCrutch,
-        Token::RCrutch,
-        Token::RCrutch
+        Token::RBracket,
+        Token::RBracket,
+        Token::RBracket
       ]
     );
   }

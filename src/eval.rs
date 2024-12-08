@@ -1,7 +1,7 @@
 use crate::env::Env;
 use crate::object::Object;
 use crate::parser::parse;
-use rand::random;
+use rand::Rng;
 use std::cell::RefCell;
 use std::io::{self, Write};
 use std::rc::Rc;
@@ -28,6 +28,7 @@ fn eval_obj(
     Object::Number(n) => Ok(Object::Number(*n)),
     Object::Symbol(s) => eval_symbol(s, env),
     Object::List(list) => eval_list(list, env),
+    Object::ListData(l) => Ok(Object::ListData(l.to_vec())),
     Object::String(_) => Ok(obj.clone()),
   }
 }
@@ -56,24 +57,34 @@ fn eval_list(
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
       "set" => eval_set(list, env),
-      "put" => eval_put(list, env),
-      "get" => eval_get(list, env),
+      "input" => eval_input(list, env),
+      "print" => eval_print(list, env),
       "while" => eval_while(list, env),
-      "rand" => eval_rand(),
+      "rand" => eval_rand(list, env),
       "round" => eval_round(list, env),
+      "list" => eval_list_data(list, env),
+      "first" => eval_first(list, env),
+      "rest" => eval_rest(list, env),
+      "len" => eval_len(list, env),
       // ^builtins go here
       _ => eval_function_call(s, list, env),
     },
     _ => {
       let mut new_list = Vec::new();
-      for obj in list {
+      for obj in (*list).iter() {
         let result = eval_obj(obj, env)?;
         match result {
           Object::Void => {}
           _ => new_list.push(result),
         }
       }
-      Ok(Object::List(new_list))
+
+      match &new_list.first() {
+        Some(Object::Lambda(_, _)) => {
+          eval_obj(&Object::List(Rc::new(new_list)), env)
+        }
+        _ => Ok(Object::List(Rc::new(new_list))),
+      }
     }
   }
 }
@@ -111,6 +122,7 @@ fn eval_binary_op(
       ">=" => Ok(Object::Bool(left_val >= right_val)),
       "=" => Ok(Object::Bool(left_val == right_val)),
       "!=" => Ok(Object::Bool(left_val != right_val)),
+      "%" => Ok(Object::Number(left_val % right_val)),
       _ => Err(format!("Invalid binary operator: {}", s)),
     },
     _ => Err("Operator must be a symbol".to_string()),
@@ -159,7 +171,7 @@ fn eval_function_definition(list: &[Object]) -> Result<Object, String> {
   let params = match &list[1] {
     Object::List(list) => {
       let mut params = Vec::new();
-      for param in list {
+      for param in (*list).iter() {
         match param {
           Object::Symbol(s) => params.push(s.clone()),
           _ => return Err("Invalid `fn` parameter".to_string()),
@@ -175,7 +187,7 @@ fn eval_function_definition(list: &[Object]) -> Result<Object, String> {
     _ => return Err("Invalid `fn`".to_string()),
   };
 
-  Ok(Object::Lambda(params, body))
+  Ok(Object::Lambda(params, body.to_vec()))
 }
 
 fn eval_function_call(
@@ -197,17 +209,15 @@ fn eval_function_call(
         let val = eval_obj(&list[i + 1], env)?;
         new_env.borrow_mut().set(param, val);
       }
-      eval_obj(&Object::List(body), &mut new_env)
+      eval_obj(&Object::List(Rc::new(body)), &mut new_env)
     }
     _ => Err(format!("Not a lambda (`fn`): {}", s)),
   }
 }
 
-// builtin function time!
-
-// put: takes a variable list of args, printing each on a single line
+// print: takes a variable list of args, printing each on a single line
 // after running, goes to new line and returns the number of things printed
-fn eval_put(
+fn eval_print(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
 ) -> Result<Object, String> {
@@ -241,10 +251,10 @@ fn eval_put(
   Ok(Object::Number((list.len() - 1) as f64)) // TODO beware "as" conversion?
 }
 
-// of the form [get "prompt"] where the prompt is optional
+// of the form [input "prompt"] where the prompt is optional
 // prints "prompt" on a newline, accepts input from the user
 // tries to parse input as a float, will return err upon fail
-fn eval_get(
+fn eval_input(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
 ) -> Result<Object, String> {
@@ -286,27 +296,17 @@ fn eval_set(
     return Err("Invalid number of arguments for `set`".to_string());
   }
 
-  let var = match &list[1] {
-    Object::Symbol(s) => s.clone(),
-    _ => return Err("First argument of `set` must be a symbol".to_string()),
-  };
-
   let value = eval_obj(&list[2], env)?;
 
-  let exists = {
-    let borrowed_env = env.borrow();
-    borrowed_env.get(&var).is_some()
-  };
-
-  if exists {
-    env.borrow_mut().set(&var, value.clone());
-    Ok(value)
-  } else {
-    Err(format!("Variable `{}` not found", var))
+  match &list[1] {
+    Object::Symbol(s) => {
+      env.borrow_mut().set(s, value.clone());
+      Ok(value)
+    }
+    _ => Err("First argument of `set` not symbol".to_string()),
   }
 }
 
-//
 fn eval_while(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
@@ -343,10 +343,27 @@ fn eval_while(
   Ok(last_result)
 }
 
-// returns a random float between [0, 1)
-fn eval_rand() -> Result<Object, String> {
-  let value: f64 = random();
-  Ok(Object::Number(value))
+// of the form [rand x y]
+// returns a random number on the interval [x, y)
+fn eval_rand(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() != 3 {
+    return Err("Invalid number of arguments for `rand`".to_string());
+  }
+
+  let min = eval_obj(&list[1], env)?;
+  let max = eval_obj(&list[2], env)?;
+
+  match (min, max) {
+    (Object::Number(i), Object::Number(j)) => {
+      let mut rng = rand::thread_rng();
+      let random_value: f64 = rng.gen_range(i..j);
+      Ok(Object::Number(random_value))
+    }
+    (_, _) => Err("Invalid argument types for `rand`".to_string()),
+  }
 }
 
 fn eval_round(
@@ -360,5 +377,74 @@ fn eval_round(
   match eval_obj(&list[1], env) {
     Ok(Object::Number(n)) => Ok(Object::Number(n.round())),
     _ => Err("First argument of `set` must be a number".to_string()),
+  }
+}
+
+// evals an s-expression as a list
+fn eval_list_data(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  let mut new_list = Vec::new();
+
+  for obj in list[1..].iter() {
+    new_list.push(eval_obj(obj, env)?);
+  }
+
+  Ok(Object::ListData(new_list))
+}
+
+// returns the first element of a list:
+// [first [list 1 2 3]] ; returns 1
+fn eval_first(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() != 2 {
+    return Err("Invalid number of arguments for `first`".to_string());
+  }
+
+  match eval_obj(&list[1], env) {
+    Ok(Object::ListData(l)) => Ok(l[0].clone()),
+    _ => Err("First argument of `first` must be a list".to_string()),
+  }
+}
+
+// returns all elements of a list, without the first
+// [rest [list 1 2 3]] ; returns [2 3]
+fn eval_rest(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() != 2 {
+    return Err("Invalid number of arguments for `rest`".to_string());
+  }
+
+  let mut new_list = Vec::new();
+
+  match eval_obj(&list[1], env) {
+    Ok(Object::ListData(l)) => {
+      for item in l[1..].iter() {
+        new_list.push(item.clone());
+      }
+      Ok(Object::ListData(new_list))
+    }
+    _ => Err("First argument of `rest` must be a list".to_string()),
+  }
+}
+
+// returns the length of a list
+// [len [list 1 2 3]] ; returns 3
+fn eval_len(
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
+) -> Result<Object, String> {
+  if list.len() != 2 {
+    return Err("Invalid number of arguments for `len`".to_string());
+  }
+
+  match eval_obj(&list[1], env) {
+    Ok(Object::ListData(l)) => Ok(Object::Number(l.len() as f64)),
+    _ => Err("First argument of `rest` must be a list".to_string()),
   }
 }

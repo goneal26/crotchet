@@ -1,10 +1,10 @@
 use crate::env::Env;
 use crate::object::Object;
 use crate::parser::parse;
-use std::cell::RefCell;
-use std::rc::Rc;
 use rand::random;
+use std::cell::RefCell;
 use std::io::{self, Write};
+use std::rc::Rc;
 
 pub fn eval(
   program: &str,
@@ -51,7 +51,7 @@ fn eval_list(
       "+" | "-" | "*" | "/" | "<" | "<=" | ">" | ">=" | "=" | "!=" => {
         eval_binary_op(list, env) // returns
       }
-      
+
       "let" => eval_let(list, env),
       "if" => eval_if(list, env),
       "fn" => eval_function_definition(list),
@@ -62,7 +62,6 @@ fn eval_list(
       "rand" => eval_rand(),
       "round" => eval_round(list, env),
       // ^builtins go here
-      
       _ => eval_function_call(s, list, env),
     },
     _ => {
@@ -253,7 +252,6 @@ fn eval_get(
     return Err("Invalid number of arguments for `get`".to_string());
   }
 
-  
   let prompt = if list.len() == 2 {
     let val = eval_obj(&list[1], env)?;
     format!("{}", val)
@@ -262,21 +260,22 @@ fn eval_get(
   };
   print!("{}", prompt);
   match io::stdout().flush() {
-    Ok(_) => {},
-    Err(error) => return Err(format!("`get` failed to flush input: {}", error))
+    Ok(_) => {}
+    Err(error) => {
+      return Err(format!("`get` failed to flush input: {}", error))
+    }
   }
-  
+
   let mut input = String::new();
   match io::stdin().read_line(&mut input) {
-    Ok(_) => {},
-    Err(error) => return Err(format!("`get` failed to read: {}", error))
+    Ok(_) => {}
+    Err(error) => return Err(format!("`get` failed to read: {}", error)),
   }
 
   match input.trim().parse::<f64>() {
     Ok(number) => Ok(Object::Number(number)),
     Err(_) => Err(format!("`get` failed to parse {} as float", input)),
   }
-  
 }
 
 fn eval_set(
@@ -307,7 +306,7 @@ fn eval_set(
   }
 }
 
-// 
+//
 fn eval_while(
   list: &[Object],
   env: &mut Rc<RefCell<Env>>,
@@ -351,8 +350,8 @@ fn eval_rand() -> Result<Object, String> {
 }
 
 fn eval_round(
-  list: &[Object], 
-  env: &mut Rc<RefCell<Env>>
+  list: &[Object],
+  env: &mut Rc<RefCell<Env>>,
 ) -> Result<Object, String> {
   if list.len() != 2 {
     return Err("Invalid number of arguments for `round`".to_string());

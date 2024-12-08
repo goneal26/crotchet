@@ -7,7 +7,7 @@ pub enum Token {
   Symbol(String),
   LCrutch,
   RCrutch, // coz that's what ] is called
-  StringLit(String), 
+  StringLit(String),
 }
 
 impl fmt::Display for Token {
@@ -17,7 +17,7 @@ impl fmt::Display for Token {
       Token::Symbol(s) => write!(f, "{}", s),
       Token::LCrutch => write!(f, "["),
       Token::RCrutch => write!(f, "]"),
-      Token::StringLit(s) => write!(f, "{}", s), 
+      Token::StringLit(s) => write!(f, "{}", s),
     }
   }
 }
@@ -49,13 +49,13 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
     };
 
     // now tokenize
-    let temp = clean_line
-      .replace("[", " [ ")
-      .replace("]", " ] ");
-    
+    let temp = clean_line.replace("[", " [ ").replace("]", " ] ");
+
     let mut chars = temp.chars().peekable();
     while let Some(c) = chars.next() {
-      if c.is_whitespace() { continue; }
+      if c.is_whitespace() {
+        continue;
+      }
 
       match c {
         '[' => tokens.push(Token::LCrutch),
@@ -77,7 +77,11 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
           // symbols and numbers
           let mut word = c.to_string();
           while let Some(&next_char) = chars.peek() {
-            if next_char.is_whitespace() || next_char == '[' || next_char == ']' || next_char == '"' {
+            if next_char.is_whitespace()
+              || next_char == '['
+              || next_char == ']'
+              || next_char == '"'
+            {
               break;
             }
             word.push(next_char);

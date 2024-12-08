@@ -24,7 +24,7 @@ fn main() {
     // TODO better usage error
     argc if argc > 2 => {
       eprintln!("; crutch usage error: too many args");
-      eprintln!("; usage: crutch [file.cx]"); 
+      eprintln!("; usage: crutch [file.cx]");
     }
     argc if argc < 2 => {
       match repl() {
@@ -44,9 +44,9 @@ fn main() {
 
 fn run_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
   if !filename.ends_with(EXTENSION) {
-    return Err(format!("File must have extension {}", EXTENSION).into())
+    return Err(format!("File must have extension {}", EXTENSION).into());
   }
-  
+
   let mut file = File::open(filename)?;
   let mut program = String::new();
   file.read_to_string(&mut program)?; // file contents stored in "program"
@@ -60,7 +60,10 @@ fn run_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn repl() -> Result<(), Box<dyn std::error::Error>> {
-  println!("; Welcome to crutch v{}, type `exit` to exit", env!("CARGO_PKG_VERSION"));
+  println!(
+    "; Welcome to crutch v{}, type `exit` to exit",
+    env!("CARGO_PKG_VERSION")
+  );
   let reader = Interface::new(PROMPT).unwrap();
   let mut env = Rc::new(RefCell::new(env::Env::new()));
 

@@ -1,0 +1,39 @@
+[
+  ; welcome to crutch!
+  [print "Hello, world!"]
+
+  ; we've got basic floating-point arithmetic, lambda, and conditionals!
+  [let fib [fn [n] 
+    [if [<= n 1] 0
+      [if [= n 2] 1
+        [+ [fib [- n 1]] [fib [- n 2]]]]]]]
+  [print [fib 11]] ; will return the 11th fibonacci number
+
+  ; some booleans!
+  [print "Is 3 less than 0? " [< 3 0]]
+  [print "Is this true? " true]
+
+  ; we've got loops!
+  [print "Numbers one to five: "]
+  [let i 1]
+  [while [<= i 5]
+    [print i]
+    [set i [+ i 1]]]
+
+  ; we've got lists!
+  [let arr [list 99 98 97]]
+  [print "list: " arr]
+  [print "list first element: " [first arr]]
+  [print "list everything-but-the-first element: " [rest arr]]
+  [print "list has " [len arr] " elements."]
+
+  ; random numbers!
+  [let x [rand 1 6]]
+  [print "this is a random number: " x]
+  [print "this is it after rounding: " [round x]]
+  ; you can also round a float to its nearest whole value with `round`
+
+  ; and of course, basic IO
+  [let y [input "Enter a number: "]]
+  [print "You entered: " y]
+]

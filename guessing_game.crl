@@ -1,0 +1,18 @@
+[
+  ; random number between 1 and 100
+  [let answer [round [rand 1 100]]]
+  ; really it's a random float from 1 to 100 so we round it
+  
+  [print "I'm thinking of a number between 1 and 100..."]
+  
+  [let score 0]
+  [let guess 0]
+  [while [!= guess answer] ; end loop when they guess it
+    [set score [+ 1 score]]
+    [set guess [input "Make a guess: "]]
+    [if [< guess answer] [print guess "? Too low!"]
+      [if [> guess answer] [print guess "? Too high!"]
+        [print "You got it! I was thinking of " answer "."]]]]
+  
+  [print "Thank you for playing! You got it in " score " guesses."]
+]

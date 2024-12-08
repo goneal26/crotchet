@@ -4,7 +4,7 @@ A LISP dialect with less `Shift`.
 
 I wanted to play around with LISP diaclects, but didn't like having to hold 
 `Shift` to type `(` and `)` all the time. So, this is a minimalist LISP subset 
-based on [Scheme](https://en.wikipedia.org/wiki/Scheme_(programming_language) 
+based on [Scheme](https://en.wikipedia.org/wiki/Scheme_(programming_language)) 
 that uses `[` and `]` instead.
 
 The name *crotchet* comes from an old printing term for a square bracket.

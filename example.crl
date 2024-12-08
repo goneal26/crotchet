@@ -1,5 +1,5 @@
 [
-  ; welcome to crutch!
+  ; welcome to crotchet!
   [print "Hello, world!"]
 
   ; we've got basic floating-point arithmetic, lambda, and conditionals!

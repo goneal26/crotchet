@@ -60,6 +60,7 @@ fn eval_list(
       "get" => eval_get(list, env),
       "while" => eval_while(list, env),
       "rand" => eval_rand(),
+      "round" => eval_round(list, env),
       // ^builtins go here
       
       _ => eval_function_call(s, list, env),
@@ -347,4 +348,18 @@ fn eval_while(
 fn eval_rand() -> Result<Object, String> {
   let value: f64 = random();
   Ok(Object::Number(value))
+}
+
+fn eval_round(
+  list: &[Object], 
+  env: &mut Rc<RefCell<Env>>
+) -> Result<Object, String> {
+  if list.len() != 2 {
+    return Err("Invalid number of arguments for `round`".to_string());
+  }
+
+  match eval_obj(&list[1], env) {
+    Ok(Object::Number(n)) => Ok(Object::Number(n.round())),
+    _ => Err("First argument of `set` must be a number".to_string()),
+  }
 }

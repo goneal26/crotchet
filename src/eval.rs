@@ -485,7 +485,10 @@ mod tests {
                    ]
                   ";
     let result = eval(program, &mut env).unwrap();
-    assert_eq!(result, Object::List(vec![Object::Number((10 * 10) as f64)].into()));
+    assert_eq!(
+      result,
+      Object::List(vec![Object::Number((10 * 10) as f64)].into())
+    );
   }
 
   #[test]
@@ -499,7 +502,10 @@ mod tests {
         ";
 
     let result = eval(program, &mut env).unwrap();
-    assert_eq!(result, Object::List(vec![Object::Number((89) as f64)].into()));
+    assert_eq!(
+      result,
+      Object::List(vec![Object::Number((89) as f64)].into())
+    );
   }
 
   #[test]
@@ -513,7 +519,10 @@ mod tests {
         ";
 
     let result = eval(program, &mut env).unwrap();
-    assert_eq!(result, Object::List(vec![Object::Number((120) as f64)].into()));
+    assert_eq!(
+      result,
+      Object::List(vec![Object::Number((120) as f64)].into())
+    );
   }
 
   #[test]

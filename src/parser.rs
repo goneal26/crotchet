@@ -75,23 +75,26 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_parse_add() {
+  fn test_add() {
     let program = "[+ 2 1]";
 
     let list = parse(program).unwrap();
 
     assert_eq!(
       list,
-      Object::List(vec![
-        Object::Symbol("+".to_string()),
-        Object::Number(2.0),
-        Object::Number(1.0),
-      ])
+      Object::List(
+        vec![
+          Object::Symbol("+".to_string()),
+          Object::Number(2.0),
+          Object::Number(1.0),
+        ]
+        .into()
+      )
     );
   }
 
   #[test]
-  fn test_parse_area_of_circle() {
+  fn test_area_of_circle() {
     let program = "[
       [let r 10]
       [let pi 3.14]
@@ -101,27 +104,42 @@ mod tests {
 
     assert_eq!(
       list,
-      Object::List(vec![
-        Object::List(vec![
-          Object::Symbol("let".to_string()),
-          Object::Symbol("r".to_string()),
-          Object::Number(10.0),
-        ]),
-        Object::List(vec![
-          Object::Symbol("let".to_string()),
-          Object::Symbol("pi".to_string()),
-          Object::Number(3.14),
-        ]),
-        Object::List(vec![
-          Object::Symbol("*".to_string()),
-          Object::Symbol("pi".to_string()),
-          Object::List(vec![
-            Object::Symbol("*".to_string()),
-            Object::Symbol("r".to_string()),
-            Object::Symbol("r".to_string()),
-          ]),
-        ]),
-      ])
+      Object::List(
+        vec![
+          Object::List(
+            vec![
+              Object::Symbol("let".to_string()),
+              Object::Symbol("r".to_string()),
+              Object::Number(10.0),
+            ]
+            .into()
+          ),
+          Object::List(
+            vec![
+              Object::Symbol("let".to_string()),
+              Object::Symbol("pi".to_string()),
+              Object::Number(3.14),
+            ]
+            .into()
+          ),
+          Object::List(
+            vec![
+              Object::Symbol("*".to_string()),
+              Object::Symbol("pi".to_string()),
+              Object::List(
+                vec![
+                  Object::Symbol("*".to_string()),
+                  Object::Symbol("r".to_string()),
+                  Object::Symbol("r".to_string()),
+                ]
+                .into()
+              ),
+            ]
+            .into()
+          ),
+        ]
+        .into()
+      )
     );
   }
 }

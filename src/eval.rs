@@ -448,3 +448,91 @@ fn eval_len(
     _ => Err("First argument of `rest` must be a list".to_string()),
   }
 }
+
+// TODO tests
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_simple_add() {
+    let mut env = Rc::new(RefCell::new(Env::new()));
+    let result = eval("[+ 1 2]", &mut env).unwrap();
+    assert_eq!(result, Object::Number(3.0));
+  }
+
+  #[test]
+  fn test_area_of_a_circle() {
+    let mut env = Rc::new(RefCell::new(Env::new()));
+    let program = "[
+                     [let r 10]
+                     [let pi 3.14]
+                     [* pi [* r r]]
+                   ]";
+    let result = eval(program, &mut env).unwrap();
+    assert_eq!(
+      result,
+      Object::List(vec![Object::Number((3.14 * 10.0 * 10.0) as f64)].into())
+    );
+  }
+
+  #[test]
+  fn test_sqr_function() {
+    let mut env = Rc::new(RefCell::new(Env::new()));
+    let program = "[
+                      [let sqr [fn [r] [* r r]]] 
+                      [sqr 10]
+                   ]
+                  ";
+    let result = eval(program, &mut env).unwrap();
+    assert_eq!(result, Object::List(vec![Object::Number((10 * 10) as f64)].into()));
+  }
+
+  #[test]
+  fn test_fibonaci() {
+    let mut env = Rc::new(RefCell::new(Env::new()));
+    let program = "
+            [
+              [let fib [fn [n] [if [< n 2] 1 [+ [fib [- n 1]] [fib [- n 2]]]]]]
+              [fib 10]
+            ]
+        ";
+
+    let result = eval(program, &mut env).unwrap();
+    assert_eq!(result, Object::List(vec![Object::Number((89) as f64)].into()));
+  }
+
+  #[test]
+  fn test_factorial() {
+    let mut env = Rc::new(RefCell::new(Env::new()));
+    let program = "
+            [
+              [let fact [fn [n] [if [< n 1] 1 [* n [fact [- n 1]]]]]]
+              [fact 5]
+            ]
+        ";
+
+    let result = eval(program, &mut env).unwrap();
+    assert_eq!(result, Object::List(vec![Object::Number((120) as f64)].into()));
+  }
+
+  #[test]
+  fn test_circle_area_function() {
+    let mut env = Rc::new(RefCell::new(Env::new()));
+    let program = "
+            [
+              [let pi 3.14]
+              [let r 10]
+              [let sqr [fn [r] [* r r]]]
+              [let area [fn [r] [* pi [sqr r]]]]
+              [area r]
+            ]
+        ";
+
+    let result = eval(program, &mut env).unwrap();
+    assert_eq!(
+      result,
+      Object::List(vec![Object::Number((3.14 * 10.0 * 10.0) as f64)].into())
+    );
+  }
+}

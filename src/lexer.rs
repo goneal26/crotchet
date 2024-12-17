@@ -13,29 +13,29 @@ pub enum Token {
 impl fmt::Display for Token {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      Token::Number(n) => write!(f, "{}", n),
-      Token::Symbol(s) => write!(f, "{}", s),
+      Token::Number(n) => write!(f, "{n}"),
+      Token::Symbol(s) | Token::StringLit(s) => write!(f, "{s}"),
       Token::LBracket => write!(f, "["),
       Token::RBracket => write!(f, "]"),
-      Token::StringLit(s) => write!(f, "{}", s),
     }
   }
 }
 
 #[derive(Debug)]
-pub struct LexerError {
+pub struct LexErr {
   msg: String,
 }
 
-impl Error for LexerError {}
+impl Error for LexErr {}
 
-impl fmt::Display for LexerError {
+impl fmt::Display for LexErr {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "syntax: {}", self.msg)
   }
 }
 
-pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
+#[allow(clippy::unnecessary_wraps)]
+pub fn tokenize(source: &str) -> Result<Vec<Token>, LexErr> {
   // split into lines to handle comments
   let lines = source.lines();
   let mut tokens: Vec<Token> = Vec::new();
@@ -49,7 +49,7 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, LexerError> {
     };
 
     // now tokenize
-    let temp = clean_line.replace("[", " [ ").replace("]", " ] ");
+    let temp = clean_line.replace('[', " [ ").replace(']', " ] ");
 
     let mut chars = temp.chars().peekable();
     while let Some(c) = chars.next() {

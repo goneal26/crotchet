@@ -34,7 +34,7 @@ fn parse_list(tokens: &mut Vec<Token>) -> Result<Object, ParseError> {
 
   if token != Some(Token::LBracket) {
     return Err(ParseError {
-      err: format!("Expected `[`, found {:?}", token),
+      err: format!("Expected `[`, found {token:?}"),
     });
   }
 

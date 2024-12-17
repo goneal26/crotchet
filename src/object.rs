@@ -17,17 +17,17 @@ impl fmt::Display for Object {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
       Object::Void => write!(f, "Void"),
-      Object::Number(n) => write!(f, "{}", n),
-      Object::Bool(b) => write!(f, "{}", b),
-      Object::Symbol(s) => write!(f, "{}", s),
+      Object::Number(n) => write!(f, "{n}"),
+      Object::Bool(b) => write!(f, "{b}"),
+      Object::Symbol(s) | Object::String(s) => write!(f, "{s}"),
       Object::Lambda(params, body) => {
         writeln!(f, "fn[")?;
         for param in params {
-          writeln!(f, "{} ", param)?;
+          writeln!(f, "{param} ")?;
         }
         writeln!(f, "]")?;
         for expr in body {
-          writeln!(f, " {}", expr)?;
+          writeln!(f, " {expr}")?;
         }
         Ok(())
       }
@@ -37,7 +37,7 @@ impl fmt::Display for Object {
           if i > 0 {
             write!(f, " ")?;
           }
-          write!(f, "{}", obj)?;
+          write!(f, "{obj}")?;
         }
         write!(f, "]")
       }
@@ -47,11 +47,10 @@ impl fmt::Display for Object {
           if i > 0 {
             write!(f, " ")?;
           }
-          write!(f, "{}", obj)?;
+          write!(f, "{obj}")?;
         }
         write!(f, "]")
       }
-      Object::String(s) => write!(f, "{}", s),
     }
   }
 }

@@ -11,7 +11,7 @@ pub struct Env {
 
 impl Env {
   pub fn new() -> Self {
-    Default::default()
+    Env::default()
   }
 
   pub fn extend(parent: Rc<RefCell<Self>>) -> Env {

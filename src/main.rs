@@ -1,3 +1,8 @@
+#![warn(
+  clippy::all,
+  clippy::pedantic
+)]
+
 // declaring crates
 mod env;
 mod eval;
@@ -18,18 +23,18 @@ const EXTENSION: &str = ".crl";
 
 fn main() {
   let args: Vec<String> = e::args().collect();
-  let argc = args.len();
+  let argcount = args.len();
 
-  match argc {
+  match argcount {
     // TODO better usage error
-    argc if argc > 2 => {
+    argcount if argcount > 2 => {
       eprintln!("; crotchet usage error: too many args");
       eprintln!("; usage: crotchet [file.crl]");
     }
-    argc if argc < 2 => {
+    argcount if argcount < 2 => {
       match repl() {
-        Ok(_) => println!("; crotchet program exited successfully"),
-        Err(error) => eprintln!("; crotchet error: {}", error),
+        Ok(()) => println!("; crotchet program exited successfully"),
+        Err(error) => eprintln!("; crotchet error: {error}"),
       };
     }
     _ => match args[1].as_ref() {
@@ -45,8 +50,8 @@ fn main() {
         println!("    * input \"exit\" to leave REPL mode");
       }
       _ => match run_file(&args[1]) {
-        Ok(_) => {}
-        Err(error) => eprintln!("; crotchet error: {}", error),
+        Ok(()) => {}
+        Err(error) => eprintln!("; crotchet error: {error}"),
       },
     },
   }
@@ -54,7 +59,7 @@ fn main() {
 
 fn run_file(filename: &str) -> Result<(), Box<dyn std::error::Error>> {
   if !filename.ends_with(EXTENSION) {
-    return Err(format!("File must have extension {}", EXTENSION).into());
+    return Err(format!("File must have extension {EXTENSION}").into());
   }
 
   let mut file = File::open(filename)?;
@@ -88,20 +93,20 @@ fn repl() -> Result<(), Box<dyn std::error::Error>> {
     let val = eval::eval(input.as_ref(), &mut env)?;
     match val {
       Object::Void => {}
-      Object::Number(n) => println!("; {}", n),
-      Object::Bool(b) => println!("; {}", b),
-      Object::Symbol(s) => println!("; {}", s),
+      Object::Number(n) => println!("; {n}"),
+      Object::Bool(b) => println!("; {b}"),
+      Object::Symbol(s) => println!("; {s}"),
       Object::Lambda(params, body) => {
         println!("; fn[");
         for param in params {
-          println!("{} ", param);
+          println!("{param} ");
         }
         println!("]");
         for expr in body {
-          println!(" {}", expr);
+          println!(" {expr}");
         }
       }
-      _ => println!("; {}", val),
+      _ => println!("; {val}"),
     }
   }
 
